@@ -10,7 +10,7 @@ module PassengerReaper
       commands = ARGV.select {|cmd| VALID_COMMANDS.include?(cmd) }
       unless commands.empty?
         commands.each do |arg|
-          case args.first
+          case arg
           when 'old'
             PassengerProcess.kill_old_passengers
           when 'active'
