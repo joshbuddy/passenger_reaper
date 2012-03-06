@@ -20,6 +20,12 @@ EOF
     passenger.uptime.should eql('40s')
   end
   
+  it "should return old passenger processes" do
+    old_pids = PassengerReaper::PassengerProcess.old
+    old_pids.count.should eql(2)
+    old_pids.map{|p| p.pid}.should eql([14521, 14525])
+  end
+  
   it "should parse the uptime into seconds" do
     all_passenger_processes = PassengerReaper::PassengerProcess.active
     all_passenger_processes[0].uptime_in_seconds.should eql(40)

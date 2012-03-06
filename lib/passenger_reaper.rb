@@ -3,22 +3,24 @@ require "passenger_reaper/ps_etime"
 require "passenger_reaper/passenger_process"
 
 module PassengerReaper
-  MINIMUM_ETIME = 600 # 10 minutes
-
   class Runner
     def self.run(args)
-      if %W(active inactive debug status).include?(ARGV.first)
-        case ARGV.first
-        when 'active'
-          PassengerProcess.kill_stale_passengers
-        when 'inactive'
-          PassengerProcess.kill_inactive_passengers
-        when 'debug'
-          PassengerProcess.inactive_passengers_last_log_entry
-        when 'status'
-          puts "Total of passengers: #{PassengerProcess.all_passenger_pids.count}"
-          puts "Stale passengers: #{PassengerProcess.stale.count}"
-        end
+      case args.first
+      when 'old'
+        PassengerProcess.kill_old_passengers
+      when 'active'
+        PassengerProcess.kill_stale_passengers
+      when 'inactive'
+        PassengerProcess.kill_inactive_passengers
+      when 'all'
+        PassengerProcess.kill_old_passengers
+        PassengerProcess.kill_stale_passengers
+        PassengerProcess.kill_inactive_passengers
+      when 'debug'
+        PassengerProcess.inactive_passengers_last_log_entry
+      when 'status'
+        puts "Total of passengers: #{PassengerProcess.all_passenger_pids.count}"
+        puts "Stale passengers: #{PassengerProcess.stale.count}"
       else
         help =<<-EOF
 Error: please use the following syntax:
@@ -28,8 +30,10 @@ Error: please use the following syntax:
 Commands:
 
 status    displays the number of total passenger workers and the number of active workers
+old       kills old workers that passengers has in the pool
 active    kills stale workers that passengers has in the pool
 inactive  kills workers that passenger no longer controls
+all       kills both active, inactive & old workers
 debug     shows the last log entry from each inactive worker
 
 Options:

@@ -2,6 +2,8 @@ require 'chronic'
 
 module PassengerReaper
   class PassengerProcess
+    MINIMUM_ETIME = 600 # 10 minutes
+
     attr_accessor :pid, :uptime
     
     def initialize(passenger_status_line)
@@ -31,6 +33,15 @@ module PassengerReaper
       passengers
     end
 
+    def self.old
+      passengers = []
+      passenger_status.each_line do |line|
+        passengers << PassengerProcess.new(line)
+      end
+      passengers.select! { |ps| ps.uptime_in_seconds > MINIMUM_ETIME }
+      passengers
+    end
+
     def self.stale
       stale_passengers = []
       potentially_stale_processes = active.select { |p| p.uptime_in_seconds > 600 }
@@ -46,8 +57,7 @@ module PassengerReaper
     end
     
     def self.last_log_entry(pid)
-      pwd = `pwd`.chomp
-      `grep 'rails\\[#{pid}\\]' #{pwd}/log/production.log | tail -n 1`.chomp
+      `grep 'rails\\[#{pid}\\]' #{Dir.pwd}/log/production.log | tail -n 1`.chomp
     end
     
     def self.last_log_entry_time(pid)
@@ -91,9 +101,24 @@ module PassengerReaper
       inactive_passenger_pids
     end
 
+    def self.old_passenger_pids
+      old_passenger_pids = []
+      all_passenger_pids.each do |pid|
+        raw_etime = `ps -p #{pid} --no-headers -o etime`.chomp
+        etime = PsEtime.new(raw_etime)
+        old_passenger_pids << pid unless (etime.age_in_seconds < (MINIMUM_ETIME || 600))
+      end
+      old_passenger_pids
+    end
+
     def self.kill_inactive_passengers
       inactive_passenger_pids.each do |pid|
         kill(pid)
+      end
+    end
+    def self.kill_old_passengers
+      old.each do |ps|
+        kill(ps.pid)
       end
     end
     
