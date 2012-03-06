@@ -4,23 +4,30 @@ require "passenger_reaper/passenger_process"
 
 module PassengerReaper
   class Runner
-    def self.run(args)
-      case args.first
-      when 'old'
-        PassengerProcess.kill_old_passengers
-      when 'active'
-        PassengerProcess.kill_stale_passengers
-      when 'inactive'
-        PassengerProcess.kill_inactive_passengers
-      when 'all'
-        PassengerProcess.kill_old_passengers
-        PassengerProcess.kill_stale_passengers
-        PassengerProcess.kill_inactive_passengers
-      when 'debug'
-        PassengerProcess.inactive_passengers_last_log_entry
-      when 'status'
-        puts "Total of passengers: #{PassengerProcess.all_passenger_pids.count}"
-        puts "Stale passengers: #{PassengerProcess.stale.count}"
+    VALID_COMMANDS = %w(old active inactive all debug status)
+
+    def self.run
+      commands = ARGV.select {|cmd| VALID_COMMANDS.include?(cmd) }
+      unless commands.empty?
+        commands.each do |arg|
+          case args.first
+          when 'old'
+            PassengerProcess.kill_old_passengers
+          when 'active'
+            PassengerProcess.kill_stale_passengers
+          when 'inactive'
+            PassengerProcess.kill_inactive_passengers
+          when 'all'
+            PassengerProcess.kill_old_passengers
+            PassengerProcess.kill_stale_passengers
+            PassengerProcess.kill_inactive_passengers
+          when 'debug'
+            PassengerProcess.inactive_passengers_last_log_entry
+          when 'status'
+            puts "Total of passengers: #{PassengerProcess.all_passenger_pids.count}"
+            puts "Stale passengers: #{PassengerProcess.stale.count}"
+          end
+        end
       else
         help =<<-EOF
 Error: please use the following syntax:

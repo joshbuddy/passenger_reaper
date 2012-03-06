@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 
 require 'passenger_reaper'
-PassengerReaper::Runner.run(ARGV)
+PassengerReaper::Runner.run
