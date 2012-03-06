@@ -36,9 +36,9 @@ module PassengerReaper
     def self.old
       passengers = []
       passenger_status.each_line do |line|
-        passengers << PassengerProcess.new(line)
+        ps = PassengerProcess.new(line)
+        passengers << ps if ps.uptime_in_seconds > MINIMUM_ETIME
       end
-      passengers.select! { |ps| ps.uptime_in_seconds > MINIMUM_ETIME }
       passengers
     end
 
@@ -116,6 +116,7 @@ module PassengerReaper
         kill(pid)
       end
     end
+
     def self.kill_old_passengers
       old.each do |ps|
         kill(ps.pid)
